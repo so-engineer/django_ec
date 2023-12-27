@@ -28,6 +28,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    image: ec
+    container_name: ec_container
 
 volumes:
   db-data:
