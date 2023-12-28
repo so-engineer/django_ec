@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'ecapp.apps.EcappConfig',
 ]
 
 MIDDLEWARE = [
@@ -116,7 +117,20 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
+# CSS等のURLとなり最後スラッシュを入れる
 STATIC_URL = 'static/'
+
+# CSS等の保存先（本番環境用となり本番環境はSTATICFILES_DIRSからここに一つにまとめる）
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+# CSS等の保存先（開発環境用となり複数の保存先を指定可）
+STATICFILES_DIRS = [str(BASE_DIR / "static")]
+
+# 画像のURLとなり最後スラッシュを入れる
+MEDIA_URL = "media/"
+
+# 画像の保存先（開発環境用）
+MEDIA_ROOT = BASE_DIR / "media"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
