@@ -82,10 +82,6 @@ DATABASES = {
     "default": env.db(),
 }
 
-# import os
-# DATABASES = {
-#     "default": env.db(default=os.environ.get("DATABASE_URL"))
-# }
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
