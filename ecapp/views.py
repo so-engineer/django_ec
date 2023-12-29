@@ -10,9 +10,9 @@ class ItemList(ListView):
 class ItemDetail(DetailView):
     template_name = 'detail.html'
     model = ItemModel
-    # 商品をid順に表示するための処理
-    context_object_name = 'sort_object_list'
-    queryset = ItemModel.objects.all().order_by('id')
+    # メソッドをオーバーライドし商品をid順に取得する
+    def get_queryset(self):
+        return ItemModel.objects.all().order_by('id')
 
     # メソッドをオーバーライドしURLから取得されるオブジェクトに加えて最新のDBデータを取得する
     def get_context_data(self, **kwargs):
