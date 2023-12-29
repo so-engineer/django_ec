@@ -10,6 +10,7 @@ class ItemList(ListView):
 class ItemDetail(DetailView):
     template_name = 'detail.html'
     model = ItemModel
+    queryset = ItemModel.objects.all().order_by('id')
 
     # メソッドをオーバーライドしURLから取得されるオブジェクトに加えて最新のDBデータを取得する
     def get_context_data(self, **kwargs):
