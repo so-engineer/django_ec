@@ -27,18 +27,15 @@ environ.Env.read_env(env_file=str(BASE_DIR) + "/.env")
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = env("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
-# Falseで本番環境
-# DEBUG = True
-
-# ALLOWED_HOSTS = ['127.0.0.1', '.herokuapp.com']
-
 
 # The `DYNO` env var is set on Heroku CI, but it's not a real Heroku app, so we have to
 # also explicitly exclude CI:
 # https://devcenter.heroku.com/articles/heroku-ci#immutable-environment-variables
+# heroku環境かどうか判断
 IS_HEROKU_APP = "DYNO" in env and not "CI" in env
 
 # SECURITY WARNING: don't run with debug turned on in production!
+# heroku環境でなければデバッグ環境とする
 if not IS_HEROKU_APP:
     DEBUG = True
 
@@ -46,6 +43,7 @@ if not IS_HEROKU_APP:
 # validation of the Host header in the incoming HTTP request. On other platforms you may need
 # to list the expected hostnames explicitly to prevent HTTP Host header attacks. See:
 # https://docs.djangoproject.com/en/5.0/ref/settings/#std-setting-ALLOWED_HOSTS
+# heroku環境であれば本番環境とする
 if IS_HEROKU_APP:
     ALLOWED_HOSTS = ["*"]
 else:
