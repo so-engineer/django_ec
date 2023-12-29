@@ -27,9 +27,27 @@ environ.Env.read_env(env_file=str(BASE_DIR) + "/.env")
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = env("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
 
-ALLOWED_HOSTS = []
+# The `DYNO` env var is set on Heroku CI, but it's not a real Heroku app, so we have to
+# also explicitly exclude CI:
+# https://devcenter.heroku.com/articles/heroku-ci#immutable-environment-variables
+# heroku環境かどうか判断
+IS_HEROKU_APP = "DYNO" in env and not "CI" in env
+
+# SECURITY WARNING: don't run with debug turned on in production!
+# heroku環境でなければデバッグ環境とする
+if not IS_HEROKU_APP:
+    DEBUG = True
+
+# On Heroku, it's safe to use a wildcard for `ALLOWED_HOSTS``, since the Heroku router performs
+# validation of the Host header in the incoming HTTP request. On other platforms you may need
+# to list the expected hostnames explicitly to prevent HTTP Host header attacks. See:
+# https://docs.djangoproject.com/en/5.0/ref/settings/#std-setting-ALLOWED_HOSTS
+# heroku環境であれば本番環境とする
+if IS_HEROKU_APP:
+    ALLOWED_HOSTS = ["*"]
+else:
+    ALLOWED_HOSTS = []
 
 
 # Application definition
@@ -41,10 +59,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'ecapp.apps.EcappConfig',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware', #追加
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -78,6 +98,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 DATABASES = {
+    # DATABASE_URLを読み込む
     "default": env.db(),
 }
 
@@ -116,7 +137,20 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
+# CSS等のURLとなり最後スラッシュを入れる
 STATIC_URL = 'static/'
+
+# CSS等の保存先（本番環境用となり本番環境はSTATICFILES_DIRSからここに一つにまとめる）
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+# CSS等の保存先（開発環境用となり複数の保存先を指定可）
+STATICFILES_DIRS = [str(BASE_DIR / "static")]
+
+# 画像のURLとなり最後スラッシュを入れる
+MEDIA_URL = "media/"
+
+# 画像の保存先（開発環境用）
+MEDIA_ROOT = BASE_DIR / "media"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
