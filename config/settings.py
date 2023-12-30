@@ -75,6 +75,13 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+
+# デフォルトはデータベースのセッション
+# ファイルベースのセッション
+# SESSION_ENGINE = 'django.contrib.sessions.backends.file'
+# キャッシュベースのセッション
+# SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+
 ROOT_URLCONF = 'config.urls'
 
 TEMPLATES = [
