@@ -186,14 +186,14 @@
           <a href="{% url 'list' %}"><button type="" class="btn">商品一覧へ</button></a>
         </h4>
         <ul class="list-group mb-3">
-          {% for item in items %}
+          {% for cart_item in cart_items %}
           <li class="list-group-item d-flex justify-content-between lh-sm">
             <div>
-              <h6 class="my-0">{{ item.name }}</h6>
-              <small class="text-body-secondary">{{ item.content }}</small>
+              <h6 class="my-0">{{ cart_item.item.name }}</h6>
+              <small class="text-body-secondary">{{ cart_item.item.content }}</small>
             </div>
-            <span class="text-body-secondary">{{ item.price }}</span>
-            <a href="{% url 'checkout_remove' item.pk %}"><button type="" class="btn">削除</button></a>
+            <span class="text-body-secondary">{{ cart_item.item.price }}</span>
+            <a href="{% url 'checkout_remove' cart_item.item.pk %}"><button type="" class="btn">削除</button></a>
           </li>
           {% endfor %}
           <li class="list-group-item d-flex justify-content-between bg-body-tertiary">
