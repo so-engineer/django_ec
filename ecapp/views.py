@@ -3,16 +3,17 @@ from django.views.generic import ListView, DetailView
 from .models import ItemModel
 # from django.contrib.sessions.models import Session
 
+# herokuログ確認
 from django.views.decorators.csrf import requires_csrf_token
 from django.http import HttpResponseServerError
 
-# herokuログ確認
 @requires_csrf_token
 def my_customized_server_error(request, template_name='500.html'):
     import sys
     from django.views import debug
     error_html = debug.technical_500_response(request, *sys.exc_info()).content
     return HttpResponseServerError(error_html)
+
 
 class ItemList(ListView):
     template_name = 'list.html'
@@ -43,14 +44,16 @@ class ItemDetail(DetailView):
     
 def cart_func(request):
     cart = request.session.get('cart', [])
+    count = 0
     items = []
     total_price = 0
-    # カートの商品数と合計金額を算定
-    for cart_pk in cart:
-        items.append(get_object_or_404(ItemModel, pk=cart_pk))
-        total_price += get_object_or_404(ItemModel, pk=cart_pk).price
-    context = {"session_count": len(items), "items": items, "total_price": total_price}
-
+    if cart:
+        count = len(cart)
+        # カートの商品数と合計金額を算定
+        for cart_pk in cart:
+            items.append(get_object_or_404(ItemModel, pk=cart_pk))
+            total_price += get_object_or_404(ItemModel, pk=cart_pk).price
+    context = {"session_count": count, "items": items, "total_price": total_price}
     return render(request, 'checkout.html', context)
 
 def add_to_cart_from_list_func(request, pk):
@@ -76,7 +79,10 @@ def add_to_cart_from_detail_func(request, pk):
 # カート数を返す
 def get_cart_count(request):
     cart = request.session.get('cart')
-    return len(cart)
+    count = 0
+    if cart:
+        count = len(cart)
+    return count
 
 def remove_from_cart_func(request, pk):
     cart = request.session.get('cart', [])
