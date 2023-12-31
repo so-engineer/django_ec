@@ -14,7 +14,7 @@ Shop Item - Start Bootstrap Template
         <div class="row gx-4 gx-lg-5 align-items-center">
             <div class="col-md-6"><img class="card-img-top mb-5 mb-md-0" src="{{ object.item_image.url }}" alt="{{ object.name }}" /></div>
             <div class="col-md-6">
-                <div class="small mb-1">{{ object.title }}</div>
+                <div class="small mb-1">{{ object.name }}</div>
                 <h1 class="display-5 fw-bolder">{{ object.name }}</h1>
                 <div class="fs-5 mb-5">
                     <!-- ディスカウント前の金額 -->
@@ -24,8 +24,7 @@ Shop Item - Start Bootstrap Template
                 <p class="lead">{{ object.content }}</p>
                 <div class="d-flex">
                     <!-- formを用いてカートへの追加数量をquantityとして渡す -->
-                    <form action="{% url 'checkout_add_detail' object.pk %}" method="post">
-                        {% csrf_token %}
+                    <form action="{% url 'checkout_add_detail' object.pk %}" method="post">{% csrf_token %}
                         <input class="form-control text-center me-3" id="inputQuantity" name="quantity" type="number" value="1" style="max-width: 3rem" />
                         <button class="btn btn-outline-dark flex-shrink-0" type="submit" style="margin-top: 10px">
                             <i class="bi-cart-fill me-1"></i> Add to cart

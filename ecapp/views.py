@@ -1,7 +1,9 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.views.generic import ListView, DetailView
-from .models import ItemModel
+from django.views.generic import ListView, DetailView, CreateView
+from .models import ItemModel, BillModel
 # from django.contrib.sessions.models import Session
+from django.contrib import messages
+from django.urls import reverse_lazy
 
 # herokuログ確認
 from django.views.decorators.csrf import requires_csrf_token
@@ -92,3 +94,21 @@ def remove_from_cart_func(request, pk):
     request.session['cart'] = cart
     return redirect("checkout_cart")
     
+def bill_flash(request):
+    # flashメッセージの設定
+    messages.success(request, '購入ありがとうございます')
+    # 他にも messages.info, messages.warning, messages.error が利用可能
+
+class BillCreate(CreateView):
+    template_name = "checkout.html"
+    model = BillModel
+    # ブラウザで表示させるフィールド
+    fields = ("firstname", "lastname", "username", "email", "address", "address2", "country", "state", \
+              "zip", "same_address", "save_info", "cc_name", "cc_number", "cc_expiration", "cc_cvv")
+    success_url = reverse_lazy("list")
+
+    # メソッドをオーバーライドしflashメッセージを取得する
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        bill_flash(self.request)
+        return response
