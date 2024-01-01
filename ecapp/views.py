@@ -29,7 +29,10 @@ class ItemList(ListView):
         context = super().get_context_data(**kwargs)
         # セッション数をコンテキストに追加
         # context['session_count'] = Session.objects.count() # 重複が削除されるためNG
-        context['session_count'] = self.request.session.get('cart_item_count')
+        if self.request.session.get('cart_item_count') is None:
+            context['session_count'] = 0
+        else:
+            context['session_count'] = self.request.session.get('cart_item_count')
         return context
 
 class ItemDetail(DetailView):
@@ -41,7 +44,12 @@ class ItemDetail(DetailView):
         context = super().get_context_data(**kwargs)
         # 最新のDBデータをコンテキストに追加
         context['latest_item'] = ItemModel.objects.latest('id')
-        context['session_count'] = self.request.session.get('cart_item_count')
+
+        # セッション数をコンテキストに追加 
+        if self.request.session.get('cart_item_count') is None:
+            context['session_count'] = 0
+        else:
+            context['session_count'] = self.request.session.get('cart_item_count')
         return context
     
 def cart_func(request):
@@ -133,6 +141,17 @@ def bill_flash(request):
     messages.success(request, '購入ありがとうございます')
     # 他にも messages.info, messages.warning, messages.error が利用可能
 
+def delete_cart(request):
+    # カート情報を取得
+    cart_object = get_cart_info(request)
+
+    # カート内のアイテムをすべて削除
+    cart_object.cart_items.all().delete()
+
+    # カート情報をセッションから削除
+    del request.session['cart_id']
+    del request.session['cart_item_count']
+
 class BillCreate(CreateView):
     template_name = "checkout.html"
     model = BillModel
@@ -145,4 +164,9 @@ class BillCreate(CreateView):
     def form_valid(self, form):
         response = super().form_valid(form)
         bill_flash(self.request)
+
+        # カートを削除
+        delete_cart(self.request)
+
         return response
+    
