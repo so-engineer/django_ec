@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import ListView, DetailView, CreateView
-from .models import ItemModel, BillModel
+from .models import ItemModel, CartModel, CartItemModel, BillModel
 # from django.contrib.sessions.models import Session
 from django.contrib import messages
 from django.urls import reverse_lazy
@@ -29,7 +29,7 @@ class ItemList(ListView):
         context = super().get_context_data(**kwargs)
         # セッション数をコンテキストに追加
         # context['session_count'] = Session.objects.count() # 重複が削除されるためNG
-        context['session_count'] = get_cart_count(self.request)
+        context['session_count'] = self.request.session.get('cart_item_count')
         return context
 
 class ItemDetail(DetailView):
@@ -41,57 +41,91 @@ class ItemDetail(DetailView):
         context = super().get_context_data(**kwargs)
         # 最新のDBデータをコンテキストに追加
         context['latest_item'] = ItemModel.objects.latest('id')
-        context['session_count'] = get_cart_count(self.request)
+        context['session_count'] = self.request.session.get('cart_item_count')
         return context
     
 def cart_func(request):
-    cart = request.session.get('cart', [])
-    count = 0
-    items = []
+    # カート情報を取得
+    cart_object = get_cart_info(request)
+
+    # カートアイテムとカートアイテム数を取得
+    cart_items = cart_object.cart_items.all()
+    cart_item_count = cart_object.cart_items.all().count()
+
+    # カートアイテムの数をセッションに保存
+    request.session['cart_item_count'] = cart_item_count
+
     total_price = 0
-    if cart:
-        count = len(cart)
-        # カートの商品数と合計金額を算定
-        for cart_pk in cart:
-            items.append(get_object_or_404(ItemModel, pk=cart_pk))
-            total_price += get_object_or_404(ItemModel, pk=cart_pk).price
-    context = {"session_count": count, "items": items, "total_price": total_price}
+    # カートの商品数と合計金額を算定
+    for cart_item in cart_items:
+        total_price += cart_item.item.price
+    context = {"session_count": cart_item_count, "cart_items": cart_items, "total_price": total_price}
     return render(request, 'checkout.html', context)
 
 def add_to_cart_from_list_func(request, pk):
-    # セッションのカートを取得、なければ新しく作成
-    cart = request.session.get('cart', [])
-    cart.append(pk)
-    # カートをセッションに保存
-    request.session['cart'] = cart
+    # カート情報を取得
+    cart_object = get_cart_info(request)
+
+    # 商品オブジェクトを作成
+    item_object = get_object_or_404(ItemModel, id=pk)
+
+    # 中間オブジェクトを作成
+    cart_item_object= CartItemModel.objects.create(cart=cart_object, item=item_object)
+    cart_item_object.save()
+
+    # カートアイテムの数を取得
+    cart_item_count = cart_object.cart_items.all().count()
+
+    # カートアイテムの数をセッションに保存
+    request.session['cart_item_count'] = cart_item_count
     return redirect("list")
 
 def add_to_cart_from_detail_func(request, pk):
+    # カート情報を取得
+    cart_object = get_cart_info(request)
+
+    # 商品オブジェクトを作成
+    item_object = get_object_or_404(ItemModel, id=pk)
+
     # カートへの追加数量を取得
     quantity = int(request.POST.get('quantity', 1))
-    # セッションのカートを取得、なければ新しく作成
-    cart = request.session.get('cart', [])
-    # 商品IDをカートに追加
+
+    # カートへの追加数量分だけ中間オブジェクトを作成
     for _ in range(quantity):
-        cart.append(pk)
-    # カートをセッションに保存
-    request.session['cart'] = cart
+        cart_item_object= CartItemModel.objects.create(cart=cart_object, item=item_object)
+        cart_item_object.save()
+
+    # カートアイテムの数を取得
+    cart_item_count = cart_object.cart_items.all().count()
+
+    # カートアイテムの数をセッションに保存
+    request.session['cart_item_count'] = cart_item_count
     return redirect("detail", pk) # pk忘れずに
 
-# カート数を返す
-def get_cart_count(request):
-    cart = request.session.get('cart')
-    count = 0
-    if cart:
-        count = len(cart)
-    return count
+# 各メソッドで共通となるカート情報を返す
+def get_cart_info(request):
+    cart_id = request.session.get('cart_id')
+
+    if cart_id:
+        cart_object = CartModel.objects.get(id=cart_id)
+    else:
+        cart_object = CartModel.objects.create()
+        cart_object.save()
+        # セッションにカートIDを保存
+        request.session['cart_id'] = cart_object.id
+
+    return cart_object
 
 def remove_from_cart_func(request, pk):
-    cart = request.session.get('cart', [])
-    # リストから最初に見つかった特定の要素を削除
-    cart.remove(pk)
+    # カート情報を取得
+    cart_object = get_cart_info(request)
+
+    # カートアイテムからpkに一致する最初のデータを削除
+    cart_object.cart_items.filter(item__id=pk).first().delete()
+
     # セッションを更新
-    request.session['cart'] = cart
+    cart_item_count = cart_object.cart_items.all().count()
+    request.session['cart_item_count'] = cart_item_count
     return redirect("checkout_cart")
     
 def bill_flash(request):

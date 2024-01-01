@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('ecapp', '0003_itemmodel_title'),
+        ('ecapp', '0002_itemmodel_item_image'),
     ]
 
     operations = [
@@ -25,9 +25,5 @@ class Migration(migrations.Migration):
             name='price',
             field=models.IntegerField(blank=True, null=True),
         ),
-        migrations.AlterField(
-            model_name='itemmodel',
-            name='title',
-            field=models.CharField(blank=True, null=True),
-        ),
+
     ]

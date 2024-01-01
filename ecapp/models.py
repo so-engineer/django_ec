@@ -10,6 +10,18 @@ class ItemModel(models.Model):
     def __str__(self):
         return self.name
     
+class CartModel(models.Model):
+    def __str__(self):
+        return self.id
+    
+class CartItemModel(models.Model):
+    # 中間テーブルの作成
+    cart = models.ForeignKey(CartModel, on_delete=models.CASCADE, related_name='cart_items')
+    item = models.ForeignKey(ItemModel, on_delete=models.CASCADE, related_name='item_carts')
+
+    def __str__(self):
+        return f"{self.cart}_{self.item}"
+    
 class BillModel(models.Model):
     firstname = models.CharField(null=True, blank=True)
     lastname = models.CharField(null=True, blank=True)
@@ -29,3 +41,4 @@ class BillModel(models.Model):
 
     def __str__(self):
         return self.firstname
+    
