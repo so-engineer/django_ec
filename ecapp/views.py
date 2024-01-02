@@ -1,7 +1,9 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.views.generic import ListView, DetailView
-from .models import ItemModel, CartModel, CartItemModel
+from django.views.generic import ListView, DetailView, CreateView
+from .models import ItemModel, CartModel, CartItemModel, BillModel
 # from django.contrib.sessions.models import Session
+from django.contrib import messages
+from django.urls import reverse_lazy
 
 # herokuログ確認
 from django.views.decorators.csrf import requires_csrf_token
@@ -26,8 +28,11 @@ class ItemList(ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         # セッション数をコンテキストに追加
-        # context['cart_item_count'] = Session.objects.count() # 重複が削除されるためNG
-        context['cart_item_count'] = self.request.session.get('cart_item_count')
+        # context['session_count'] = Session.objects.count() # 重複が削除されるためNG
+        if self.request.session.get('cart_item_count') is None:
+            context['session_count'] = 0
+        else:
+            context['session_count'] = self.request.session.get('cart_item_count')
         return context
 
 class ItemDetail(DetailView):
@@ -39,7 +44,12 @@ class ItemDetail(DetailView):
         context = super().get_context_data(**kwargs)
         # 最新のDBデータをコンテキストに追加
         context['latest_item'] = ItemModel.objects.latest('id')
-        context['cart_item_count'] = self.request.session.get('cart_item_count')
+
+        # セッション数をコンテキストに追加 
+        if self.request.session.get('cart_item_count') is None:
+            context['session_count'] = 0
+        else:
+            context['session_count'] = self.request.session.get('cart_item_count')
         return context
     
 def cart_func(request):
@@ -129,4 +139,38 @@ def remove_from_cart_func(request, pk):
     cart_item_count = cart_object.cart_item_count()
     request.session['cart_item_count'] = cart_item_count
     return redirect("checkout_cart")
+    
+def bill_flash(request):
+    # flashメッセージの設定
+    messages.success(request, '購入ありがとうございます')
+    # 他にも messages.info, messages.warning, messages.error が利用可能
+
+def delete_cart(request):
+    # カート情報を取得
+    cart_object = get_cart_info(request)
+
+    # カート内のアイテムをすべて削除
+    cart_object.cart_items.all().delete()
+
+    # カート情報をセッションから削除
+    del request.session['cart_id']
+    del request.session['cart_item_count']
+
+class BillCreate(CreateView):
+    template_name = "checkout.html"
+    model = BillModel
+    # ブラウザで表示させるフィールド
+    fields = ("firstname", "lastname", "username", "email", "address", "address2", "country", "state", \
+              "zip", "same_address", "save_info", "cc_name", "cc_number", "cc_expiration", "cc_cvv")
+    success_url = reverse_lazy("list")
+
+    # メソッドをオーバーライドしflashメッセージを取得する
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        bill_flash(self.request)
+
+        # カートを削除
+        delete_cart(self.request)
+
+        return response
     
