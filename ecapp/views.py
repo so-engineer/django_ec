@@ -26,8 +26,8 @@ class ItemList(ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         # セッション数をコンテキストに追加
-        # context['session_count'] = Session.objects.count() # 重複が削除されるためNG
-        context['session_count'] = self.request.session.get('cart_item_count')
+        # context['cart_item_count'] = Session.objects.count() # 重複が削除されるためNG
+        context['cart_item_count'] = self.request.session.get('cart_item_count')
         return context
 
 class ItemDetail(DetailView):
@@ -39,7 +39,7 @@ class ItemDetail(DetailView):
         context = super().get_context_data(**kwargs)
         # 最新のDBデータをコンテキストに追加
         context['latest_item'] = ItemModel.objects.latest('id')
-        context['session_count'] = self.request.session.get('cart_item_count')
+        context['cart_item_count'] = self.request.session.get('cart_item_count')
         return context
     
 def cart_func(request):
@@ -47,17 +47,20 @@ def cart_func(request):
     cart_object = get_cart_info(request)
 
     # カートアイテムとカートアイテム数を取得
-    cart_items = cart_object.cart_items.all()
-    cart_item_count = cart_object.cart_items.all().count()
+    # cart_items = cart_object.cart_items.all()
+    # cart_item_count = cart_object.cart_items.all().count()
+    cart_items = cart_object.cart_item_all()
+    cart_item_count = cart_object.cart_item_count()
 
     # カートアイテムの数をセッションに保存
     request.session['cart_item_count'] = cart_item_count
 
-    total_price = 0
+    # total_price = 0
     # カートの商品数と合計金額を算定
-    for cart_item in cart_items:
-        total_price += cart_item.item.price
-    context = {"session_count": cart_item_count, "cart_items": cart_items, "total_price": total_price}
+    total_price = cart_object.cart_item_price()
+    # for cart_item in cart_items:
+    #     total_price += cart_item.item.price
+    context = {"cart_item_count": cart_item_count, "cart_items": cart_items, "total_price": total_price}
     return render(request, 'checkout.html', context)
 
 def add_to_cart_from_list_func(request, pk):
@@ -69,10 +72,10 @@ def add_to_cart_from_list_func(request, pk):
 
     # 中間オブジェクトを作成
     cart_item_object= CartItemModel.objects.create(cart=cart_object, item=item_object)
-    cart_item_object.save()
 
     # カートアイテムの数を取得
-    cart_item_count = cart_object.cart_items.all().count()
+    # cart_item_count = cart_object.cart_items.all().count()
+    cart_item_count = cart_object.cart_item_count()
 
     # カートアイテムの数をセッションに保存
     request.session['cart_item_count'] = cart_item_count
@@ -94,7 +97,8 @@ def add_to_cart_from_detail_func(request, pk):
         cart_item_object.save()
 
     # カートアイテムの数を取得
-    cart_item_count = cart_object.cart_items.all().count()
+    # cart_item_count = cart_object.cart_items.all().count()
+    cart_item_count = cart_object.cart_item_count()
 
     # カートアイテムの数をセッションに保存
     request.session['cart_item_count'] = cart_item_count
@@ -108,7 +112,6 @@ def get_cart_info(request):
         cart_object = CartModel.objects.get(id=cart_id)
     else:
         cart_object = CartModel.objects.create()
-        cart_object.save()
         # セッションにカートIDを保存
         request.session['cart_id'] = cart_object.id
 
@@ -122,7 +125,8 @@ def remove_from_cart_func(request, pk):
     cart_object.cart_items.filter(item__id=pk).first().delete()
 
     # セッションを更新
-    cart_item_count = cart_object.cart_items.all().count()
+    # cart_item_count = cart_object.cart_items.all().count()
+    cart_item_count = cart_object.cart_item_count()
     request.session['cart_item_count'] = cart_item_count
     return redirect("checkout_cart")
     
