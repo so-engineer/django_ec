@@ -30,9 +30,9 @@ class ItemList(ListView):
         # セッション数をコンテキストに追加
         # context['session_count'] = Session.objects.count() # 重複が削除されるためNG
         if self.request.session.get('cart_item_count') is None:
-            context['session_count'] = 0
+            context['cart_item_count'] = 0
         else:
-            context['session_count'] = self.request.session.get('cart_item_count')
+            context['cart_item_count'] = self.request.session.get('cart_item_count')
         return context
 
 class ItemDetail(DetailView):
@@ -47,9 +47,9 @@ class ItemDetail(DetailView):
 
         # セッション数をコンテキストに追加 
         if self.request.session.get('cart_item_count') is None:
-            context['session_count'] = 0
+            context['cart_item_count'] = 0
         else:
-            context['session_count'] = self.request.session.get('cart_item_count')
+            context['cart_item_count'] = self.request.session.get('cart_item_count')
         return context
     
 def cart_func(request):
