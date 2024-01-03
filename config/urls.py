@@ -4,6 +4,12 @@ from django.views.generic.base import TemplateView
 from django.conf import settings
 from django.conf.urls.static import static
 
+# herokuログ確認
+from ecapp import views
+
+handler500 = views.my_customized_server_error
+
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('hello/', TemplateView.as_view(template_name='hello.html')),
