@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<!-- fileを扱う場合はenctypeの指定でmultipartを使う -->
+<form method="POST" enctype="multipart/form-data">{% csrf_token %}
+  <p>name:<input type="text" name="name"></p>
+  <p>price:<input type="number" name="price"></p>
+  <p>item_image:<input type="file" name="item_image"></p>
+  <p>content:<input type="text" name="content"></p>
+  <input type="submit" value="create">
+</form>
+{% endblock %}

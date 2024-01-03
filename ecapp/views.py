@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.views.generic import ListView, DetailView, CreateView
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from .models import ItemModel, CartModel, CartItemModel, BillModel
 # from django.contrib.sessions.models import Session
 from django.contrib import messages
@@ -57,8 +57,6 @@ def cart_func(request):
     cart_object = get_cart_info(request)
 
     # カートアイテムとカートアイテム数を取得
-    # cart_items = cart_object.cart_items.all()
-    # cart_item_count = cart_object.cart_items.all().count()
     cart_items = cart_object.cart_item_all()
     cart_item_count = cart_object.cart_item_count()
 
@@ -68,8 +66,6 @@ def cart_func(request):
     # total_price = 0
     # カートの商品数と合計金額を算定
     total_price = cart_object.cart_item_price()
-    # for cart_item in cart_items:
-    #     total_price += cart_item.item.price
     context = {"cart_item_count": cart_item_count, "cart_items": cart_items, "total_price": total_price}
     return render(request, 'checkout.html', context)
 
@@ -84,7 +80,6 @@ def add_to_cart_from_list_func(request, pk):
     cart_item_object= CartItemModel.objects.create(cart=cart_object, item=item_object)
 
     # カートアイテムの数を取得
-    # cart_item_count = cart_object.cart_items.all().count()
     cart_item_count = cart_object.cart_item_count()
 
     # カートアイテムの数をセッションに保存
@@ -103,11 +98,9 @@ def add_to_cart_from_detail_func(request, pk):
 
     # カートへの追加数量分だけ中間オブジェクトを作成
     for _ in range(quantity):
-        cart_item_object= CartItemModel.objects.create(cart=cart_object, item=item_object)
-        cart_item_object.save()
+        CartItemModel.objects.create(cart=cart_object, item=item_object)
 
     # カートアイテムの数を取得
-    # cart_item_count = cart_object.cart_items.all().count()
     cart_item_count = cart_object.cart_item_count()
 
     # カートアイテムの数をセッションに保存
@@ -119,7 +112,8 @@ def get_cart_info(request):
     cart_id = request.session.get('cart_id')
 
     if cart_id:
-        cart_object = CartModel.objects.get(id=cart_id)
+        # cart_object = CartModel.objects.get(id=cart_id)
+        cart_object = get_object_or_404(CartModel, id=cart_id)
     else:
         cart_object = CartModel.objects.create()
         # セッションにカートIDを保存
@@ -135,7 +129,6 @@ def remove_from_cart_func(request, pk):
     cart_object.cart_items.filter(item__id=pk).first().delete()
 
     # セッションを更新
-    # cart_item_count = cart_object.cart_items.all().count()
     cart_item_count = cart_object.cart_item_count()
     request.session['cart_item_count'] = cart_item_count
     return redirect("checkout_cart")
@@ -174,3 +167,52 @@ class BillCreate(CreateView):
 
         return response
     
+
+# 以下管理者用の設定
+class AdmItemList(ListView):
+    template_name = 'adm/list.html'
+    model = ItemModel
+
+    # メソッドをオーバーライドし商品をid順に取得する
+    def get_queryset(self):
+        return ItemModel.objects.all().order_by('id')
+    
+    # メソッドをオーバーライドしURLから取得されるオブジェクトに加えてセッション数を取得する
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # セッション数をコンテキストに追加
+        # context['session_count'] = Session.objects.count() # 重複が削除されるためNG
+        if self.request.session.get('cart_item_count') is None:
+            context['cart_item_count'] = 0
+        else:
+            context['cart_item_count'] = self.request.session.get('cart_item_count')
+        return context
+    
+class AdmItemCreate(CreateView):
+    template_name = "adm/create.html"
+    model = ItemModel
+    # ブラウザで表示させるフィールド
+    fields = ("name", "price", "item_image", "content")
+    success_url = reverse_lazy("adm_list")
+
+class AdmItemUpdate(UpdateView):
+    template_name = "adm/update.html"
+    model = ItemModel
+    # ブラウザで表示させるフィールド
+    fields = ("name", "price", "item_image", "content")
+    success_url = reverse_lazy("adm_list")
+
+class AdmItemDelete(DeleteView):
+    # template_name = "adm/delete.html"
+    model = ItemModel
+    success_url = reverse_lazy('adm_list')
+
+    # メソッドをオーバーライドしテンプレートに遷移せず直接商品を削除する
+    def delete(self, request, *args, **kwargs):
+        item_object = self.get_object()
+        item_object.delete()
+        return redirect(AdmItemDelete.success_url)
+
+    def get(self, request, *args, **kwargs):
+        return self.delete(self, request, *args, **kwargs)
+
