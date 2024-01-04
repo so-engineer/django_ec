@@ -14,9 +14,9 @@ urlpatterns = [
     path('checkout/remove/<int:pk>', remove_from_cart_func, name='checkout_remove'),
     path('checkout/bill/', BillCreate.as_view(), name="checkout_bill"),
 
-    path('adm/', basic_auth_required(AdmItemList.as_view()), name="adm_list"),
-    path('adm/create/', basic_auth_required(AdmItemCreate.as_view()), name="adm_create"),
-    path('adm/update/<int:pk>', basic_auth_required(AdmItemUpdate.as_view()), name="adm_update"),
-    path('adm/delete/<int:pk>', basic_auth_required(AdmItemDelete.as_view()), name="adm_delete"),
+    path('adm/items/', basic_auth_required(AdmItemList.as_view()), name="adm_list"),
+    path('adm/items/create/', basic_auth_required(AdmItemCreate.as_view()), name="adm_create"),
+    path('adm/items/update/<int:pk>', basic_auth_required(AdmItemUpdate.as_view()), name="adm_update"),
+    path('adm/items/delete/<int:pk>', basic_auth_required(AdmItemDelete.as_view()), name="adm_delete"),
 
 ]
