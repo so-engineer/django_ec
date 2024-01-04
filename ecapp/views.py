@@ -153,7 +153,7 @@ def send_email(request, email):
     'テストメールの本文。',
     'xxx@gmail.com',  # 送信元アドレス
     [email],  # 受信者のアドレスリスト
-    fail_silently=False,
+    fail_silently=False, # メール送信時に何か問題が発生した場合にはエラーが発生
     )
 
 def delete_cart(request):
