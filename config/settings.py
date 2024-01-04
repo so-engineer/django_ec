@@ -66,13 +66,14 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware', #追加
+    'whitenoise.middleware.WhiteNoiseMiddleware', # 追加
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # 'basicauth.middleware.BasicAuthMiddleware', # トップページにベーシック認証がかかる
 ]
 
 
@@ -174,3 +175,6 @@ if IS_HEROKU_APP:
         'API_KEY': env('CLOUDINARY_API_KEY'),
         'API_SECRET': env('CLOUDINARY_API_SECRET')
     }
+
+# ベーシック認証用
+BASICAUTH_USERS = {"admin": "pw"}

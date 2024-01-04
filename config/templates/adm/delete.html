@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block content %}
+<!-- fileを扱う場合はenctypeの指定でmultipartを使う -->
+<form method="POST" enctype="multipart/form-data">{% csrf_token %}
+  <input type="submit" value="delete">
+</form>
+{% endblock %}
