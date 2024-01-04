@@ -1,0 +1,16 @@
+<h3>購入明細一覧</h3>
+{% for object in object_list %}
+<ul>
+  <li>
+    <p>bill_id：<a href="{% url 'adm_buy_detail' object.id %}">{{ object.id }}</a></p>
+  </li>
+  <ul>
+    <li>
+      <p>firstname：{{ object.firstname }}</p>
+    </li>
+    <li>
+      <p>email：{{ object.email }}</p>
+    </li>
+  </ul>
+</ul>
+{% endfor %}

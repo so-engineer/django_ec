@@ -57,3 +57,14 @@ class BillModel(models.Model):
     def __str__(self):
         return self.firstname
     
+class BuyDetailModel(models.Model):
+    bill = models.ForeignKey(BillModel, on_delete=models.CASCADE, null=True, blank=True, related_name='bill_buys')
+
+    name = models.CharField(null=True, blank=True)
+    price = models.IntegerField(null=True, blank=True)
+    # item_image = models.ImageField(upload_to="", null=True, blank=True)
+    content = models.TextField(null=True, blank=True)
+
+    def __str__(self):
+        return self.bill_id
+    
