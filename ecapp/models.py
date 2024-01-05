@@ -57,7 +57,7 @@ class BillModel(models.Model):
     def __str__(self):
         return self.firstname
     
-class BuyDetailModel(models.Model):
+class BuyItemModel(models.Model):
     bill = models.ForeignKey(BillModel, on_delete=models.CASCADE, null=True, blank=True, related_name='bill_buys')
 
     name = models.CharField(null=True, blank=True)

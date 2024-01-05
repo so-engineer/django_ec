@@ -18,7 +18,7 @@ urlpatterns = [
     path('adm/items/create/', basic_auth_required(AdmItemCreate.as_view()), name="adm_create"),
     path('adm/items/update/<int:pk>', basic_auth_required(AdmItemUpdate.as_view()), name="adm_update"),
     path('adm/items/delete/<int:pk>', basic_auth_required(AdmItemDelete.as_view()), name="adm_delete"),
-    path('adm/buy/', basic_auth_required(AdmBuyList.as_view()), name="adm_buy_list"),
-    path('adm/buy/detail/<int:pk>', basic_auth_required(AdmBuyDetail.as_view()), name="adm_buy_detail"),
+    path('adm/bills/', basic_auth_required(AdmBuyList.as_view()), name="adm_buy_list"),
+    path('adm/bills/<int:pk>/items/', basic_auth_required(AdmBuyDetail.as_view()), name="adm_buy_detail"),
 
 ]

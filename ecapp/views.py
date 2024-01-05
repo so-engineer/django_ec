@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
-from .models import ItemModel, CartModel, CartItemModel, BillModel, BuyDetailModel
+from .models import ItemModel, CartModel, CartItemModel, BillModel, BuyItemModel
 # from django.contrib.sessions.models import Session
 from django.contrib import messages
 from django.urls import reverse_lazy
@@ -143,8 +143,16 @@ def create_buy_list(request, pk):
     cart_object = get_cart_info(request)
     cart_items = cart_object.cart_item_all()
 
+    # 購入明細オブジェクトが入ったリストを作る（この段階ではDBに登録されない）
+    buy_item_objects = []
     for cart_item in cart_items:
-        BuyDetailModel.objects.create(bill_id = pk, name=cart_item.item.name, content=cart_item.item.content, price=cart_item.item.price)
+        buy_item_objects.append(BuyItemModel(bill_id=pk, name=cart_item.item.name, content=cart_item.item.content, price=cart_item.item.price))
+
+    # buy_item_objectsのデータをDBに一括登録する
+    BuyItemModel.objects.bulk_create(buy_item_objects)
+
+    # for cart_item in cart_items:
+    #     BuyItemModel.objects.create(bill_id=pk, name=cart_item.item.name, content=cart_item.item.content, price=cart_item.item.price)
 
 def send_email(request, email):
     # メール送信
@@ -249,9 +257,9 @@ class AdmBuyList(ListView):
 
 class AdmBuyDetail(ListView):
     template_name = 'adm/buy_detail.html'
-    model = BuyDetailModel
+    model = BuyItemModel
 
     # メソッドをオーバーライドしbill_idに紐付く購入明細のオブジェクトを取得する
     def get_queryset(self):
         pk = self.kwargs.get('pk')
-        return BuyDetailModel.objects.filter(bill_id=pk)
+        return BuyItemModel.objects.filter(bill_id=pk)
