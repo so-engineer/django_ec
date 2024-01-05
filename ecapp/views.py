@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
-from .models import ItemModel, CartModel, CartItemModel, BillModel, BuyItemModel
+from .models import ItemModel, CartModel, CartItemModel, BillModel, BuyItemModel, PromoCodeModel
 # from django.contrib.sessions.models import Session
 from django.contrib import messages
 from django.urls import reverse_lazy
@@ -52,7 +52,14 @@ class ItemDetail(DetailView):
         else:
             context['cart_item_count'] = self.request.session.get('cart_item_count')
         return context
-    
+
+def delete_promo_code(request):
+    code = request.session.get('promo_code')
+    try:
+        PromoCodeModel.objects.get(code=code).delete()
+    except:
+        pass
+
 def cart_func(request):
     # カート情報を取得
     cart_object = get_cart_info(request)
@@ -64,9 +71,21 @@ def cart_func(request):
     # カートアイテムの数をセッションに保存
     request.session['cart_item_count'] = cart_item_count
 
-    # カートの商品数と合計金額を算定
-    total_price = cart_object.cart_item_price()
-    context = {"cart_item_count": cart_item_count, "cart_items": cart_items, "total_price": total_price}
+    # プロモーションコードを算定
+    code = request.POST.get('promo_code', "xxx")
+    # checkout時に削除するためにセッションにプロモコードを保存
+    request.session['promo_code'] = code
+    try:
+        discount = PromoCodeModel.objects.get(code=code).discount
+        discount = discount * -1
+    except:
+        discount = 0
+
+    # 合計金額を算定
+    total_price = cart_object.cart_item_price() + discount
+    
+    context = {"cart_item_count": cart_item_count, "cart_items": cart_items, "total_price": total_price, "discount": discount}
+
     return render(request, 'checkout.html', context)
 
 def add_to_cart_from_list_func(request, pk):
@@ -195,6 +214,8 @@ class BillCreate(CreateView):
         send_email(self.request, self.object.email)
         # カートを削除
         delete_cart(self.request)
+        # プロモーションコードを削除
+        delete_promo_code(self.request)
 
         return response
 
