@@ -28,8 +28,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    image: ec
-    container_name: ec_container
+    image: django_ec
 
 volumes:
   db-data:

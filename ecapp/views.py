@@ -1,9 +1,10 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
-from .models import ItemModel, CartModel, CartItemModel, BillModel
+from .models import ItemModel, CartModel, CartItemModel, BillModel, BuyItemModel, PromoCodeModel
 # from django.contrib.sessions.models import Session
 from django.contrib import messages
 from django.urls import reverse_lazy
+from django.core.mail import send_mail
 
 # herokuログ確認
 from django.views.decorators.csrf import requires_csrf_token
@@ -51,7 +52,14 @@ class ItemDetail(DetailView):
         else:
             context['cart_item_count'] = self.request.session.get('cart_item_count')
         return context
-    
+
+def delete_promo_code(request):
+    code = request.session.get('promo_code')
+    try:
+        PromoCodeModel.objects.get(code=code).delete()
+    except:
+        pass
+
 def cart_func(request):
     # カート情報を取得
     cart_object = get_cart_info(request)
@@ -63,10 +71,21 @@ def cart_func(request):
     # カートアイテムの数をセッションに保存
     request.session['cart_item_count'] = cart_item_count
 
-    # total_price = 0
-    # カートの商品数と合計金額を算定
-    total_price = cart_object.cart_item_price()
-    context = {"cart_item_count": cart_item_count, "cart_items": cart_items, "total_price": total_price}
+    # プロモーションコードを算定
+    code = request.POST.get('promo_code', "xxx")
+    # checkout時に削除するためにセッションにプロモコードを保存
+    request.session['promo_code'] = code
+    try:
+        discount = PromoCodeModel.objects.get(code=code).discount
+        discount = discount * -1
+    except:
+        discount = 0
+
+    # 合計金額を算定
+    total_price = cart_object.cart_item_price() + discount
+    
+    context = {"cart_item_count": cart_item_count, "cart_items": cart_items, "total_price": total_price, "discount": discount}
+
     return render(request, 'checkout.html', context)
 
 def add_to_cart_from_list_func(request, pk):
@@ -138,6 +157,32 @@ def bill_flash(request):
     messages.success(request, '購入ありがとうございます')
     # 他にも messages.info, messages.warning, messages.error が利用可能
 
+def create_buy_list(request, pk):
+    # カート情報を取得
+    cart_object = get_cart_info(request)
+    cart_items = cart_object.cart_item_all()
+
+    # 購入明細オブジェクトが入ったリストを作る（この段階ではDBに登録されない）
+    buy_item_objects = []
+    for cart_item in cart_items:
+        buy_item_objects.append(BuyItemModel(bill_id=pk, name=cart_item.item.name, content=cart_item.item.content, price=cart_item.item.price))
+
+    # buy_item_objectsのデータをDBに一括登録する
+    BuyItemModel.objects.bulk_create(buy_item_objects)
+
+    # for cart_item in cart_items:
+    #     BuyItemModel.objects.create(bill_id=pk, name=cart_item.item.name, content=cart_item.item.content, price=cart_item.item.price)
+
+def send_email(request, email):
+    # メール送信
+    send_mail(
+    'テストメールの件名',
+    'テストメールの本文。',
+    'xxx@gmail.com',  # 送信元アドレス
+    [email],  # 受信者のアドレスリスト
+    fail_silently=False, # メール送信時に何か問題が発生した場合にはエラーが発生
+    )
+
 def delete_cart(request):
     # カート情報を取得
     cart_object = get_cart_info(request)
@@ -157,16 +202,23 @@ class BillCreate(CreateView):
               "zip", "same_address", "save_info", "cc_name", "cc_number", "cc_expiration", "cc_cvv")
     success_url = reverse_lazy("list")
 
-    # メソッドをオーバーライドしflashメッセージを取得する
+    # メソッドをオーバーライドしform情報を取得する
     def form_valid(self, form):
         response = super().form_valid(form)
+        # flashメッセージの取得
         bill_flash(self.request)
-
+        # 購入明細を作成
+        # self.objectは作成されたBillModelオブジェクトを参照
+        create_buy_list(self.request, self.object.pk)
+        # メール送信
+        send_email(self.request, self.object.email)
         # カートを削除
         delete_cart(self.request)
+        # プロモーションコードを削除
+        delete_promo_code(self.request)
 
         return response
-    
+
 
 # 以下管理者用の設定
 class AdmItemList(ListView):
@@ -216,3 +268,19 @@ class AdmItemDelete(DeleteView):
     def get(self, request, *args, **kwargs):
         return self.delete(self, request, *args, **kwargs)
 
+class AdmBuyList(ListView):
+    template_name = 'adm/buy_list.html'
+    model = BillModel
+
+    # メソッドをオーバーライドし購入明細をid順に取得する
+    def get_queryset(self):
+        return BillModel.objects.all().order_by('id')
+
+class AdmBuyDetail(ListView):
+    template_name = 'adm/buy_detail.html'
+    model = BuyItemModel
+
+    # メソッドをオーバーライドしbill_idに紐付く購入明細のオブジェクトを取得する
+    def get_queryset(self):
+        pk = self.kwargs.get('pk')
+        return BuyItemModel.objects.filter(bill_id=pk)
