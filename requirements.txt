@@ -6,3 +6,6 @@ gunicorn==21.2.0
 whitenoise==6.6.0
 django-cloudinary-storage==0.3.0
 django-basicauth==0.5.3
+black==24.2.0
+isort==5.13.2
+flake8==7.0.0
