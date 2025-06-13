@@ -45,9 +45,10 @@ if not IS_HEROKU_APP:
 # https://docs.djangoproject.com/en/5.0/ref/settings/#std-setting-ALLOWED_HOSTS
 # heroku環境であれば本番環境とする
 if IS_HEROKU_APP:
+    # TODO: fix
     ALLOWED_HOSTS = ["*"]
 else:
-    ALLOWED_HOSTS = []
+    ALLOWED_HOSTS = ["*"]
 
 
 # Application definition
@@ -159,7 +160,7 @@ STATICFILES_DIRS = [str(BASE_DIR / "static")]
 # 画像のURLとなり最後スラッシュを入れる
 MEDIA_URL = "media/"
 
-# 画像の保存先（開発環境用）
+# 画像の保存先
 MEDIA_ROOT = BASE_DIR / "media"
 
 # Default primary key field type
