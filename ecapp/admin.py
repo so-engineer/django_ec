@@ -1,5 +1,13 @@
 from django.contrib import admin
-from .models import ItemModel, CartModel, CartItemModel, BillModel, BuyItemModel, PromoCodeModel
+
+from .models import (
+    BillModel,
+    BuyItemModel,
+    CartItemModel,
+    CartModel,
+    ItemModel,
+    PromoCodeModel,
+)
 
 admin.site.register(ItemModel)
 admin.site.register(CartModel)
