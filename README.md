@@ -19,20 +19,29 @@ Django ECサイトは、シンプルで使いやすいECサイトを提供する
 
 ## セットアップ
 
-1. .env.templateをコピーし.envファイルの作成
+1. リポジトリのクローン
+
+```bash
+git clone https://github.com/so-engineer/django_ec
+```
+
+2. .env.templateをコピーし.envファイルの作成
 
 - SECRET_KEYの生成方法については[こちら](https://noauto-nolife.com/post/django-secret-key-regenerate/)を参照してください。
 
-2. Dockerコンテナの起動
+3. Dockerコンテナの起動
 ```bash
 docker-compose up -d
 ```
 
-3. 動作確認
-ブラウザで[localhost:3001/hello](http://localhost:3001)にアクセスし、Homeが表示されることを確認してください。
+4. 動作確認
+ブラウザで[localhost:3001](http://localhost:3001)にアクセスし、Homeが表示されることを確認してください。
 
 ## 管理画面から商品登録、更新、削除
-
+スーパーユーザーを作成し、管理画面から商品登録、更新、削除が可能です。
+```bash
+python manage.py createsuperuser
+```
 
 ## プロジェクト構造
 
@@ -59,6 +68,4 @@ docker-compose up -d
 
 ## セキュリティ
 
-- SECRET_KEYは必ず.envファイルで管理し、リポジトリにコミットしないでください
-- Basic認証が実装されています（django-basicauth）
 - 本番環境では適切なセキュリティ設定を行ってください
